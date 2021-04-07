@@ -70,7 +70,7 @@ spec:
             # Single Volume for persistents (CRIBL-3848)
             - name: CRIBL_VOLUME_DIR
               value: {{ .Values.config.criblHome }}/config-volume
-            
+
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value }}
@@ -97,7 +97,7 @@ spec:
               {{- $a_iter = add $a_iter 1 }}
 
             {{- end }}
-      {{- if  .Release.IsUpgrade }}
+      {{- if and (.Release.IsUpgrade) ( .Values.config.volumeCoalescence) }}
       initContainers:
         - name: pre-upgrade-volume-coalescence
           image: "alpine:3.3"
@@ -108,10 +108,10 @@ spec:
                   (cd {{ .Values.config.criblHome }}; tar cf - --exclude lost+found .) | (cd {{ .Values.config.criblHome }}/config-volume; tar xf -); 
                 fi
               done
-  
+
           volumeMounts:
             - name: config-storage
-              mountPath: {{ .Values.config.criblHome }}/config-volume        
+              mountPath: {{ .Values.config.criblHome }}/config-volume
             - name: local-storage
               mountPath: {{ .Values.config.criblHome }}/local
             - name: data-storage
@@ -133,7 +133,7 @@ spec:
         - name: config-storage
           persistentVolumeClaim:
             claimName: config-claim
-        {{- if  .Release.IsUpgrade }}
+        {{- if and (.Release.IsUpgrade) ( .Values.config.volumeCoalescence ) }}
         - name: local-storage
           persistentVolumeClaim:
             claimName: local-claim
